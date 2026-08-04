@@ -21,6 +21,7 @@ const CARD_ATTR = 'data-annotation-card';
 
 export default function App() {
   const [isActive, setIsActive] = useState(false);
+  const [isPaletteExpanded, setIsPaletteExpanded] = useState(false);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -73,7 +74,36 @@ export default function App() {
     };
   }, [pageKey, isActive]);
 
-  const toggle = useCallback(() => setIsActive(p => !p), []);
+  /**
+   * Overlay activity and palette visibility are deliberately separate.
+   * The annotation engine can stay active while the large command bar is
+   * collapsed to a small launcher, so choosing a tool no longer leaves a
+   * permanent floating panel over the page.
+   */
+  const openOverlay = useCallback(() => {
+    setIsActive(true);
+    setIsPaletteExpanded(true);
+  }, []);
+
+  const closeOverlay = useCallback(() => {
+    setIsActive(false);
+    setIsPaletteExpanded(false);
+    setActiveToolId(null);
+    setSelectedAnnotationId(null);
+    setShowSearch(false);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (isActive) closeOverlay();
+    else openOverlay();
+  }, [isActive, closeOverlay, openOverlay]);
+
+  const selectTool = useCallback((toolId: string | null) => {
+    setActiveToolId(toolId);
+    // A successful tool choice is the user's signal that the full palette
+    // is no longer needed. Keep a compact launcher available for switching.
+    if (toolId) setIsPaletteExpanded(false);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -91,6 +121,7 @@ export default function App() {
       if (e.key === 'Escape') {
         setActiveToolId(null);
         setSelectedAnnotationId(null);
+        setIsPaletteExpanded(false);
         e.preventDefault();
         return;
       }
@@ -111,7 +142,11 @@ export default function App() {
       }
 
       const tool = findToolByHotkey(e.key);
-      if (tool) { setActiveToolId(tool.id); e.preventDefault(); }
+      if (tool) {
+        setActiveToolId(tool.id);
+        setIsPaletteExpanded(false);
+        e.preventDefault();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -257,7 +292,7 @@ export default function App() {
         return <t.Component key={t.id} ctx={ctx} />;
       })}
 
-      {isActive && activeTool && (activeTool.takesColor || activeTool.takesStrokeWidth) && (
+      {isActive && isPaletteExpanded && activeTool && (activeTool.takesColor || activeTool.takesStrokeWidth) && (
         <ContextualPanel
           activeTool={activeTool}
           color={currentColor}
@@ -270,10 +305,15 @@ export default function App() {
       {isActive && (
         <CommandPalette
           activeToolId={activeToolId}
-          onSelectTool={setActiveToolId}
-          onClose={() => setIsActive(false)}
+          expanded={isPaletteExpanded}
+          onExpandedChange={setIsPaletteExpanded}
+          onSelectTool={selectTool}
+          onClose={closeOverlay}
           onUndoableAction={push}
-          onSearchOpen={() => setShowSearch(true)}
+          onSearchOpen={() => {
+            setShowSearch(true);
+            setIsPaletteExpanded(false);
+          }}
         />
       )}
 
