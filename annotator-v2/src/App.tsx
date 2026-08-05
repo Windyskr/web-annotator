@@ -19,7 +19,13 @@ import type { ToolContext } from './tools/types';
  *  can't drift out of sync. */
 const CARD_ATTR = 'data-annotation-card';
 
-export default function App() {
+interface AppProps {
+  /** Called after the window event listeners used by the content-script
+   *  bridge have been installed. */
+  onReady?: () => void;
+}
+
+export default function App({ onReady }: AppProps) {
   const [isActive, setIsActive] = useState(false);
   const [isPaletteExpanded, setIsPaletteExpanded] = useState(false);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
@@ -211,6 +217,13 @@ export default function App() {
     window.addEventListener('annotator-scroll-to', handler);
     return () => window.removeEventListener('annotator-scroll-to', handler);
   }, []);
+
+  // Signal readiness only after the content-script bridge listeners above are
+  // installed. The bridge then replays the first toggle/scroll request instead
+  // of racing React's asynchronous initial render.
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   const currentColor = activeTool?.takesColor
     ? toolColors[activeTool.id] ?? activeTool.defaultColor ?? '#ef4444'
