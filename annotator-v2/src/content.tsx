@@ -12,7 +12,7 @@ let appReadyPromise: Promise<void> | null = null;
  * installed the window event listeners used by this content-script bridge.
  *
  * `createRoot().render()` does not guarantee that passive effects have run
- * before it returns. Dispatching `annotator-toggle` immediately after render
+ * before it returns. Dispatching an overlay action immediately after render
  * therefore races the first mount and can make the first toolbar click appear
  * to do nothing. Returning a readiness promise makes every entry point use the
  * same deterministic handshake.
@@ -85,7 +85,9 @@ chrome.runtime.onMessage.addListener((msg) => {
       window.dispatchEvent(new CustomEvent("annotator-scroll-to", {
         detail: { annotationId: msg.annotationId },
       }));
-      window.dispatchEvent(new CustomEvent("annotator-toggle"));
+      // Navigation requests must ensure the overlay is visible. A toggle would
+      // close it when the user already had annotation mode active.
+      window.dispatchEvent(new CustomEvent("annotator-open"));
     });
   }
 });
@@ -98,7 +100,7 @@ chrome.runtime.onMessage.addListener((msg) => {
     const drained = await drainPendingNotes(currentPageKey());
     if (drained > 0) {
       await mountApp();
-      window.dispatchEvent(new CustomEvent("annotator-toggle"));
+      window.dispatchEvent(new CustomEvent("annotator-open"));
     }
   } catch (e) {
     console.debug("[handoff] drain failed", e);
