@@ -39,6 +39,8 @@ The content script previously called `createRoot().render(<App />)` and immediat
 
 `mountApp()` now returns a readiness promise. App resolves it only after the bridge listeners have been installed, and every content-script entry point dispatches its first action after that promise resolves.
 
+The bridge also distinguishes intent: the extension action emits `annotator-toggle`, while annotation navigation and Handoff emit `annotator-open`. Requests whose purpose is to reveal content therefore cannot accidentally close an overlay that is already active.
+
 ## State model
 
 The revised UI uses independent state:
@@ -70,6 +72,7 @@ The command palette and contextual color/stroke panel both carry `data-annotator
 ## Acceptance criteria
 
 - The first extension-button click opens the annotator; it does not require a second click after mounting.
+- Annotation navigation and Handoff ensure the overlay is open instead of toggling it closed.
 - Opening the annotator shows the full palette.
 - Selecting a tool collapses it to a small launcher.
 - The selected tool remains usable after collapse.
