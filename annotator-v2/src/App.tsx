@@ -183,10 +183,15 @@ export default function App({ onReady }: AppProps) {
   }, [isActive]);
 
   useEffect(() => {
-    const handler = () => toggle();
-    window.addEventListener('annotator-toggle', handler);
-    return () => window.removeEventListener('annotator-toggle', handler);
-  }, [toggle]);
+    const handleToggle = () => toggle();
+    const handleOpen = () => openOverlay();
+    window.addEventListener('annotator-toggle', handleToggle);
+    window.addEventListener('annotator-open', handleOpen);
+    return () => {
+      window.removeEventListener('annotator-toggle', handleToggle);
+      window.removeEventListener('annotator-open', handleOpen);
+    };
+  }, [toggle, openOverlay]);
 
   useEffect(() => {
     const handler = async (e: Event) => {
@@ -219,8 +224,8 @@ export default function App({ onReady }: AppProps) {
   }, []);
 
   // Signal readiness only after the content-script bridge listeners above are
-  // installed. The bridge then replays the first toggle/scroll request instead
-  // of racing React's asynchronous initial render.
+  // installed. The bridge then replays the first toggle/open/scroll request
+  // instead of racing React's asynchronous initial render.
   useEffect(() => {
     onReady?.();
   }, [onReady]);
