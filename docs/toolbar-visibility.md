@@ -33,6 +33,12 @@ It also used the raw `window.location.href`, so query-string variants had indepe
 
 The v2 content script mounts the React app after an explicit extension toggle, an annotation navigation request, or a pending Handoff note. Once `isActive` was true, however, `CommandPalette` was always rendered at the bottom of the viewport. Proximity dimming reduced its opacity but did not remove its footprint or make it contextual.
 
+### First-mount event race
+
+The content script previously called `createRoot().render(<App />)` and immediately dispatched `annotator-toggle` or `annotator-scroll-to`. React does not guarantee that passive effects have run when `render()` returns, while App installed both bridge listeners in `useEffect`. The first action could therefore be emitted before a listener existed, making the first extension-button click appear to do nothing.
+
+`mountApp()` now returns a readiness promise. App resolves it only after the bridge listeners have been installed, and every content-script entry point dispatches its first action after that promise resolves.
+
 ## State model
 
 The revised UI uses independent state:
@@ -63,6 +69,7 @@ The command palette and contextual color/stroke panel both carry `data-annotator
 
 ## Acceptance criteria
 
+- The first extension-button click opens the annotator; it does not require a second click after mounting.
 - Opening the annotator shows the full palette.
 - Selecting a tool collapses it to a small launcher.
 - The selected tool remains usable after collapse.
