@@ -44,6 +44,11 @@ export default function ContextualPanel({
   return (
     <div
       ref={posRef}
+      // The command palette's outside-click handler treats all toolbar
+      // surfaces as one interaction island. Without this marker, pressing a
+      // color or stroke-width button would collapse and unmount the panel in
+      // the capture phase before the button's click handler could run.
+      data-annotator-toolbar-surface=""
       style={{
         ...viewportBottomCenter(80),
         zIndex: 9999,
