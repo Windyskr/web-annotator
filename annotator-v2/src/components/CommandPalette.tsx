@@ -18,7 +18,7 @@ import { tools } from "../tools/registry";
 import PresenceIndicator from "./PresenceIndicator";
 import AuthButton from "./AuthButton";
 import type { UndoAction } from "../hooks/useUndoRedo";
-import { viewportBottomCenter } from "../utils/synchrony";
+import { viewportBottomCenter, useProximityDim } from "../utils/synchrony";
 
 interface Props {
   activeToolId: string | null;
@@ -43,6 +43,15 @@ export default function CommandPalette({
   const importInputRef = useRef<HTMLInputElement>(null);
   const activeTool = tools.find((tool) => tool.id === activeToolId);
   const ActiveToolIcon = activeTool?.icon;
+
+  // The compact launcher remains discoverable without becoming another
+  // permanently opaque obstruction. The expanded palette stays fully visible;
+  // only the collapsed launcher dims when the pointer is far away.
+  useProximityDim(paletteRef, {
+    nearPx: 64,
+    farPx: 260,
+    idleOpacity: expanded ? 1 : 0.32,
+  });
 
   // The full palette is transient UI. A click anywhere outside its shadow-
   // DOM subtree collapses it, while the annotation overlay and selected tool
