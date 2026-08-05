@@ -53,7 +53,7 @@ The intended transitions are:
 - Close button or backtick while active: deactivate, collapse, clear selection, and close search.
 - Open search or feed: collapse the palette while the destination opens.
 
-The compact launcher preserves discoverability by showing the active tool label and hotkey. The full palette is transient; annotation capability is not.
+The compact launcher preserves discoverability by showing the active tool label and hotkey. It fades to low opacity while the pointer is far away and returns to full opacity on approach. The expanded palette remains fully opaque. The full palette is transient; annotation capability is not.
 
 ## Shadow DOM and outside-click handling
 
@@ -66,6 +66,7 @@ The command palette and contextual color/stroke panel both carry `data-annotator
 - Opening the annotator shows the full palette.
 - Selecting a tool collapses it to a small launcher.
 - The selected tool remains usable after collapse.
+- The compact launcher dims while the pointer is far away and restores full opacity on approach.
 - Tool hotkeys do not reopen the full palette.
 - Clicking outside collapses only the palette, not the annotation overlay.
 - Color and stroke controls remain clickable.
